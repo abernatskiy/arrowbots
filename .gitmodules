@@ -1,0 +1,3 @@
+[submodule "evclib"]
+	path = evclib
+	url = https://github.com/abernatskiy/evclib.git
