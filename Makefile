@@ -1,11 +1,11 @@
 CC=g++
 CFLAGS=-std=c++11 -O2 -msse2 -ffast-math -m64 -fno-rtti -fno-exceptions -fno-stack-protector ${DISTFLAGS} ${MORECFLAGS} -g -ggdb -Wall
 LDFLAGS=-m64 -g -ggdb -Wall
-OBJECTS=main.o arrowBot.o
+OBJECTS=main.o arrowbotSimulator.o evclib/ann/direct.o
 
-all: arrowBotEvaluator
+all: arrowbotEvaluator
 
-arrowBotEvaluator : $(OBJECTS)
+arrowbotEvaluator : $(OBJECTS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 ##########################################
@@ -19,4 +19,4 @@ arrowBotEvaluator : $(OBJECTS)
 	$(CC) -o $@ -c $< $(CFLAGS)
 
 clean:
-	rm -f *.o *~ arrowBotEvaluator
+	rm -f *.o *~ arrowbotEvaluator
