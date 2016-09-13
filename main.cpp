@@ -3,7 +3,6 @@
 
 #include "evclib/parseCLI.h"
 
-#define QUEUE_VERBOSE_EVALUATION
 #include "evclib/evalQueue.h"
 
 #define ANNNodeState double // explicitly reminding to the library which type we want (double should be there by default)
@@ -33,8 +32,7 @@ int main(int argc, char** argv)
 
 	// Creating the evaluation queue and drawing the rest of the owl
 	auto evalQueue = EvalQueue<ANNDirect,ANNDirectHyperparameters>(inFN, outFN, hyp);
-//	while(1)
-	for(int i=0; i<30; i++)
+	while(1)
 	{
 		auto ptrANN = evalQueue.getNextPhenotypePtr();
 		abt.wire(ptrANN);
