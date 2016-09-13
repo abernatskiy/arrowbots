@@ -1,22 +1,35 @@
 #ifndef ARROWBOT_SIMULATOR_H
 #define ARROWBOT_SIMULATOR_H
 
-#include <string>
+#include <vector>
 #include "evclib/ann/direct.h"
 
-/* Class which handles the simulation of arrowbots via solving ODEs governing them */
+/* Class for evaluating Arrowbot controllers. Submit the controller with wire(),
+   then run the simulation and evaluation computation with evaluateController().
+   The simulation is implemented using GSL's ODE capabilities.
+ */
+                                                                                
+
+typedef struct ArrowbotSimulatorParameters
+{
+	int segments;
+	std::vector<std::vector<double>> targetOrientations;
+} ArrowbotSimulatorParameters;
 
 class ArrowbotSimulator
 {
 	private:
 
-	ANNDirect* currentController;
+	const ArrowbotSimulatorParameters* const parameters;
+	double evaluateControllerForOrientations(int orientationsIdx);
 
 	public:
 
-	ArrowbotSimulator(); // specify environmental params around here
+	ArrowbotSimulator(const ArrowbotSimulatorParameters* p);
 	void wire(ANNDirect* newController){currentController = newController;};
-	void evaluate(){currentController->eval = 0.0;};
+	void evaluateController();
+
+	int segments(){return parameters.segments;} const;
 };
 
 #endif // ARROWBOT_SIMULATOR_H
