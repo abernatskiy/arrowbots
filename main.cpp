@@ -9,14 +9,14 @@
 #define ANNNodeState double // explicitly reminding to the library which type we want (double should be there by default)
 #include "evclib/ann/direct.h"
 
-#include "arrowbot.h"
+#include "arrowbotSimulator.h"
 
 #define DM if(DEBUG)
 #define DEBUG false
 
 int main(int argc, char** argv)
 {
-	const int segments = 3;
+	const int segments = 2;
 
 	// Parsing the command line to get input file names
 	std::string inFN, outFN;
@@ -29,7 +29,7 @@ int main(int argc, char** argv)
 	hyp.transferFunction = [](double x){return x;};
 
 	// Creating the model of the robot
-	ArrowbotSimulator abt(); // likely some arguments will have to go there in the future
+	ArrowbotSimulator abt; // likely some arguments will have to go there in the future
 
 	// Creating the evaluation queue and drawing the rest of the owl
 	auto evalQueue = EvalQueue<ANNDirect,ANNDirectHyperparameters>(inFN, outFN, hyp);

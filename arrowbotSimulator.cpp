@@ -1,5 +1,5 @@
 #include "arrowbotSimulator.h"
 
-ArrowbotSimulator::ArrowbotSimulator()
+ArrowbotSimulator::ArrowbotSimulator() : currentController(NULL)
 {
 }
