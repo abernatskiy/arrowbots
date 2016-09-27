@@ -7,11 +7,6 @@
 
 #include "arrowbotSimulator.h"
 
-typedef struct ArrowbotODEParameters
-{
-	
-} ArrowbotODEParameters;
-
 /* Auxiliary functions */
 
 gsl_matrix? lowerTriangularOnes(int size)
@@ -19,31 +14,19 @@ gsl_matrix? lowerTriangularOnes(int size)
 	
 }
 
-/* Functions needed for the GSL integrator */
-int ArrowbotODE(double t, const double y[], double f[], void *params)
-{
-	ArrowbotSimulator* as = (ArrowbotSimulator*) params;
-	return GSL_SUCCESS;
-}
-
-int ArrowbotODEJacobian(double t, const double y[], double *dfdy, double dfdt[], void *params)
-{
-	ArrowbotSimulator* as = (ArrowbotSimulator*) params;
-	gsl_matrix_view dfdy_mat = gsl_matrix_view_array(dfdy, 2, 2);
-	return GSL_SUCCESS;
-}
-
 /* ArrowbotSimulator class definitions */
-
-ArrowbotsSimulator::ArrowbotSimulator(const ArrowbotSimulatorParameters* p) :
-	parameters(p),
-	currentController(nullptr)
-{
-	
-}
 
 double ArrowbotSimulator::evaluateControllerForOrientations(int orientationsIdx)
 {
+	auto itOrientation = parameters.begin() + orientationIdx;
+
+	/* ... */
+	return 0.;
+}
+
+void ArrowbotSimulator::wire(ANNDirect* newController)
+{
+	currentController = newController;
 	
 }
 

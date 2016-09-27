@@ -5,7 +5,7 @@
 
 #include "evclib/evalQueue.h"
 
-#define ANNNodeState double // explicitly reminding to the library which type we want (double should be there by default)
+#define ANNNodeState double // explicitly reminding to the library which type we want (current default)
 #include "evclib/ann/direct.h"
 
 #include "arrowbotSimulator.h"

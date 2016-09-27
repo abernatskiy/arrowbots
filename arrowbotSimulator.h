@@ -21,11 +21,13 @@ class ArrowbotSimulator
 	private:
 
 	const ArrowbotSimulatorParameters* const parameters;
+	ANNDirect* currentController;
+
 	double evaluateControllerForOrientations(int orientationsIdx);
 
 	public:
 
-	ArrowbotSimulator(const ArrowbotSimulatorParameters* p);
+	ArrowbotSimulator(const ArrowbotSimulatorParameters* p) : parameters(p), currentController(nullptr){};
 	void wire(ANNDirect* newController){currentController = newController;};
 	void evaluateController();
 
