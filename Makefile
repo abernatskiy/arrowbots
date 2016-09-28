@@ -1,5 +1,6 @@
 CC=g++
-CFLAGS=-std=c++11 -O2 -msse2 -ffast-math -m64 -fno-rtti -fno-exceptions -fno-stack-protector ${MORECFLAGS} -g -ggdb -Wall
+CFLAGS=-std=c++11 -O2 -msse2 -ffast-math -m64 -fno-rtti -fno-exceptions -fno-stack-protector ${MORECFLAGS} -g -ggdb -Wall -DNDEBUG
+# -DBOOST_UBLAS_NDEBUG
 LDFLAGS=-m64 -g -ggdb -Wall
 OBJECTS=main.o arrowbotSimulator.o evclib/ann/direct.o
 

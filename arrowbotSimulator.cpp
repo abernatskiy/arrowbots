@@ -1,20 +1,23 @@
 #include <iostream>
 #include <cstdlib>
 
-#include <gsl/gsl_errno.h>
-#include <gsl/gsl_matrix.h>
-#include <gsl/gsl_odeiv2.h>
+#include <boost/numeric/ublas/io.hpp>
 
 #include "arrowbotSimulator.h"
 
 /* Auxiliary functions */
 
-gsl_matrix? lowerTriangularOnes(int size)
+void lowerTriangularOnes(matrix<double>& K, int size)
 {
-	
+	K.resize(size, size);
+	for(int i=0; i<size; i++)
+		for(int j=0; j<size; j++)
+			K(i,j) = i>=j ? 1. : 0.;
 }
 
 /* ArrowbotSimulator class definitions */
+
+// Private
 
 double ArrowbotSimulator::evaluateControllerForOrientations(int orientationsIdx)
 {
@@ -24,10 +27,43 @@ double ArrowbotSimulator::evaluateControllerForOrientations(int orientationsIdx)
 	return 0.;
 }
 
+void ArrowbotSimulator::validateController()
+{
+	int sensors, motors;
+	std::tie(sensors, motors) = currentController->shape();
+	if(sensors!=2*segments() || motors!=segments())
+	{
+		std::cerr << "Evaluation of an unwired Arrowbot attempted, exiting\n";
+		exit(EXIT_FAILURE);
+	}
+}
+
+void ArrowbotSimulator::parseController(matrix<double>& W, matrix<double>& Y)
+{
+	int sensors, motors;
+	std::tie(sensors, motors) = currentController->shape();
+	W.resize(motors, motors, false);
+	Y.resize(motors, motors, false);
+	auto ptrWts = currentController->weightsMatrix();
+	for(int i=0; i<motors; i++)
+		for(int j=0; j<motors; j++)
+		{
+			W(i,j) = (*ptrWts)[i][j];
+			Y(i,j) = (*ptrWts)[motors+i][j];
+		}
+}
+
+// Public
+
 void ArrowbotSimulator::wire(ANNDirect* newController)
 {
 	currentController = newController;
-	
+	validateCurrentController();
+	matrix<double> W,Y,K;
+	parseCurrentController(W, Y);
+	lowerTriangularOnes(K, segments());
+	phiCoefficient = Y - prod(W, prod(parameters.sensorAttachment, K));
+	psiCoefficient = W;
 }
 
 void ArrowbotSimulator::evaluateController()
