@@ -33,7 +33,7 @@ void ArrowbotSimulator::validateController()
 	std::tie(sensors, motors) = currentController->shape();
 	if(sensors!=2*segments() || motors!=segments())
 	{
-		std::cerr << "Evaluation of an unwired Arrowbot attempted, exiting\n";
+		std::cerr << "ANN size (" << sensors << ", " << motors << ") does not match robot size (" << 2*segments() << ", " << segments() << ", exiting\n";
 		exit(EXIT_FAILURE);
 	}
 }
