@@ -1,5 +1,6 @@
 #include <tuple>
 #include <iostream>
+#include <sstream>
 #include <cstdlib>
 
 #include <boost/numeric/ublas/io.hpp>
@@ -33,17 +34,18 @@ void ArrowbotSimulator::validateArrowbotParameters()
 		exitWithError("Bad parameters: Arrowbot must have at least one segment. Exiting");
 	if(botParameters.sensorAttachment.size1() != segments() ||
 	   botParameters.sensorAttachment.size2() != segments())
+	{
 		exitWithError("Bad parameters: some size of the sensor attachment table does not match the number of segments. Exiting");
 	}
-	int maxSensorsPerSegment = 0;
-	int sensorsPerSegment = 0;
-	for(int i=0; i<segments(); i++)
+	unsigned maxSensorsPerSegment = 0;
+	unsigned sensorsPerSegment = 0;
+	for(unsigned i=0; i<segments(); i++)
 	{
-		for(int j=0; j<segments(); j++)
+		for(unsigned j=0; j<segments(); j++)
 		{
-			if(botParameters.sensorAttachment != 0.)
+			if(botParameters.sensorAttachment(i,j) != 0.)
 			{
-				if(botParameters.sensorAttachment != 1.)
+				if(botParameters.sensorAttachment(i,j) != 1.)
 					exitWithError("Bad parameters: attachment matrix must only contain zeros and ones. Exiting");
 				sensorsPerSegment++;
 			}
@@ -64,16 +66,16 @@ void ArrowbotSimulator::validateArrowbotSimulationParameters()
 	   simParameters.initialConditions(0).size() != segments())
 		exitWithError("Bad simulation parameters: size of target orientation or initial conditions vectors does not match the number of segments. Exiting");
 	if(simParameters.totalTime > simParameters.timeStep)
-		exitWithError("Bad simulation parameters: time step must be less than or equal to total simulation time. Exiting")
+		exitWithError("Bad simulation parameters: time step must be less than or equal to total simulation time. Exiting");
 }
 
 void ArrowbotSimulator::validateController()
 {
-	int sensors, motors;
+	unsigned sensors, motors;
 	std::tie(sensors, motors) = currentController->shape();
 	if(sensors!=2*segments() || motors!=segments())
 	{
-		std:ostringstream os;
+		std::ostringstream os;
 		os << "ANN size (" << sensors << ", " << motors << ") does not match robot size (" << 2*segments() << ", " << segments() << ", exiting";
 		exitWithError(os.str());
 	}
@@ -81,13 +83,13 @@ void ArrowbotSimulator::validateController()
 
 void ArrowbotSimulator::parseController(matrix<double>& W, matrix<double>& Y)
 {
-	int sensors, motors;
+	unsigned sensors, motors;
 	std::tie(sensors, motors) = currentController->shape();
 	W.resize(motors, motors, false);
 	Y.resize(motors, motors, false);
 	auto ptrWts = currentController->weightsMatrix();
-	for(int i=0; i<motors; i++)
-		for(int j=0; j<motors; j++)
+	for(unsigned i=0; i<motors; i++)
+		for(unsigned j=0; j<motors; j++)
 		{
 			W(i,j) = (*ptrWts)[i][j];
 			Y(i,j) = (*ptrWts)[motors+i][j];
@@ -131,7 +133,7 @@ double ArrowbotSimulator::evaluateControllerForOrientations(int orientationsIdx)
 
 	stateType currentState = simParameters.initialConditions(orientationsIdx);
 	runge_kutta4<stateType> stepper;
-	ArrowbotRHS abtRHS(phiCoefficient, psiCefficient, simParameters.targetOrientations(orientationsIdx));
+	ArrowbotRHS abtRHS(phiCoefficient, psiCoefficient, simParameters.targetOrientations(orientationsIdx));
 	ArrowbotObserver obs;
 	integrate_const(stepper, abtRHS, currentState, 0.0, simParameters.totalTime, simParameters.timeStep, obs);
 
@@ -145,9 +147,10 @@ void ArrowbotSimulator::wire(ANNDirect* newController)
 	currentController = newController;
 	validateController();
 	matrix<double> Y, K;
-	parseCurrentController(psiCoefficient, Y);
+	parseController(psiCoefficient, Y);
 	lowerTriangularOnes(K, segments());
-	phiCoefficient = Y - prod(psiCoefficient, prod(botParameters.sensorAttachment, K));
+	K = prod(botParameters.sensorAttachment, K);
+	phiCoefficient = Y - prod(psiCoefficient, K);
 }
 
 void ArrowbotSimulator::evaluateController()
@@ -158,10 +161,10 @@ void ArrowbotSimulator::evaluateController()
 		exit(EXIT_FAILURE);
 	}
 
-	int numEnv = parameters.targetOrientations.size();
+	unsigned numEnv = simParameters.targetOrientations.size();
 	double evalSum = 0.0;
-	for(int i=0; i<numEnv; i++)
+	for(unsigned i=0; i<numEnv; i++)
 		evalSum += evaluateControllerForOrientations(i);
 
-	return evalSim/((double) evalSim);
+	currentController->eval = evalSum/((double) numEnv);
 }

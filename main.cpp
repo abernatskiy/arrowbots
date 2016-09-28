@@ -1,13 +1,12 @@
 #include <iostream>
 #include <tuple>
 
+#include <boost/numeric/ublas/matrix.hpp>
+
 #include "evclib/parseCLI.h"
-
 #include "evclib/evalQueue.h"
-
-#define ANNNodeState double // explicitly reminding to the library which type we want (current default)
+#define ANNNodeState double // explicitly reminding ANNDirect which type we want (double is currently the default)
 #include "evclib/ann/direct.h"
-
 #include "arrowbotSimulator.h"
 
 #define DM if(DEBUG)
@@ -27,8 +26,22 @@ int main(int argc, char** argv)
 	hyp.outputNodes = segments;
 	hyp.transferFunction = [](double x){return x;};
 
-	// Creating the model of the robot
-	ArrowbotSimulator abts; // likely some arguments will have to go there in the future
+	// Creating the simulator for the robot
+	using namespace boost::numeric::ublas;
+
+	ArrowbotParameters abtParams;
+	abtParams.segments = 2;
+	abtParams.sensorAttachment = identity_matrix<double>(abtParams.segments);
+
+	ArrowbotSimulationParameters abtSimParams;
+	abtSimParams.totalTime = 1.;
+	abtSimParams.timeStep = 0.1;
+	abtSimParams.targetOrientations.resize(1);
+	abtSimParams.initialConditions.resize(1);
+	abtSimParams.targetOrientations(0) = vector<double>(1., -1.);
+	abtSimParams.initialConditions(0) = vector<double>(0.1, -0.1);
+
+	ArrowbotSimulator abts(abtParams, abtSimParams);
 
 	// Creating the evaluation queue and drawing the rest of the owl
 	auto evalQueue = EvalQueue<ANNDirect,ANNDirectHyperparameters>(inFN, outFN, hyp);

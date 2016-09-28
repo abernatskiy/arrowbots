@@ -30,8 +30,8 @@ class ArrowbotSimulator
 {
 	private:
 
-	const ArrowbotParameters* const botParameters;
-	const ArrowbotSimulationParameters* const simulationParameters;
+	const ArrowbotParameters& botParameters;
+	const ArrowbotSimulationParameters& simParameters;
 	ANNDirect* currentController;
 	matrix<double> phiCoefficient, psiCoefficient;
 
@@ -43,17 +43,17 @@ class ArrowbotSimulator
 
 	public:
 
-	ArrowbotSimulator(const ArrowbotParameters* p, const ArrowbotSimulationParameters* sp) :
-		parameters(p),
-		simulationParameters(sp),
+	ArrowbotSimulator(const ArrowbotParameters& p, const ArrowbotSimulationParameters& sp) :
+		botParameters(p),
+		simParameters(sp),
 		currentController(nullptr)
 	{
 		validateArrowbotParameters();
 		validateArrowbotSimulationParameters();
 	};
-	void wire(ANNDirect* newController){currentController = newController;};
+	void wire(ANNDirect* newController);
 	void evaluateController();
-	inline int segments(){return botParameters.segments;} const;
+	inline unsigned segments(){return botParameters.segments;};
 };
 
 #endif // ARROWBOT_SIMULATOR_H
