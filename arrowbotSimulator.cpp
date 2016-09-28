@@ -24,6 +24,30 @@ void lowerTriangularOnes(matrix<double>& K, int size)
 			K(i,j) = i>=j ? 1. : 0.;
 }
 
+std::ostream& operator<<(std::ostream& os, const vector<vector<double>>& vv)
+{
+	for(unsigned i=0; i<vv.size(); i++)
+		os << i << ": " << vv(i) << std::endl;
+	return os;
+}
+
+/* Parameter structures IO functions */
+
+std::ostream& operator<<(std::ostream& os, const ArrowbotParameters& p)
+{
+	os << "segments: " << p.segments << " sensor attachment matrix: " << p.sensorAttachment;
+	return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const ArrowbotSimulationParameters& sp)
+{
+	os << "total time: " << sp.totalTime << std::endl
+	   << "time step: " << sp.timeStep << std::endl
+	   << "Target orientations:" << std::endl << sp.targetOrientations
+	   << "Initial conditions:" << std::endl << sp.initialConditions;
+	return os;
+}
+
 /* ArrowbotSimulator class definitions */
 
 // Private
@@ -51,6 +75,7 @@ void ArrowbotSimulator::validateArrowbotParameters()
 			}
 		}
 		maxSensorsPerSegment = maxSensorsPerSegment>sensorsPerSegment ? maxSensorsPerSegment : sensorsPerSegment;
+		sensorsPerSegment = 0;
 	}
 	if(maxSensorsPerSegment > 1)
 		exitWithError("Bad parameters: having more than one sensor per segment is not supported. Exiting");

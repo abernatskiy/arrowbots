@@ -1,6 +1,7 @@
 #ifndef ARROWBOT_SIMULATOR_H
 #define ARROWBOT_SIMULATOR_H
 
+#include <iostream>
 #include <boost/numeric/ublas/matrix.hpp>
 
 #include "evclib/ann/direct.h"
@@ -18,6 +19,8 @@ typedef struct ArrowbotParameters
 	matrix<double> sensorAttachment;
 } ArrowbotParameters;
 
+std::ostream& operator<<(std::ostream&, const ArrowbotParameters&);
+
 typedef struct ArrowbotSimulationParameters
 {
 	double totalTime;
@@ -25,6 +28,8 @@ typedef struct ArrowbotSimulationParameters
 	vector<vector<double>> targetOrientations;
 	vector<vector<double>> initialConditions;
 } ArrowbotSimulationParameters;
+
+std::ostream& operator<<(std::ostream&, const ArrowbotSimulationParameters&);
 
 class ArrowbotSimulator
 {
