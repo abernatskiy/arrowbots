@@ -35,7 +35,7 @@ std::ostream& operator<<(std::ostream& os, const vector<vector<double>>& vv)
 
 std::ostream& operator<<(std::ostream& os, const ArrowbotParameters& p)
 {
-	os << "segments: " << p.segments << " sensor attachment matrix: " << p.sensorAttachment;
+	os << "segments: " << p.segments << std::endl << "sensor attachment matrix: " << p.sensorAttachment;
 	return os;
 }
 
@@ -90,7 +90,7 @@ void ArrowbotSimulator::validateArrowbotSimulationParameters()
 	if(simParameters.targetOrientations(0).size() != segments() ||
 	   simParameters.initialConditions(0).size() != segments())
 		exitWithError("Bad simulation parameters: size of target orientation or initial conditions vectors does not match the number of segments. Exiting");
-	if(simParameters.totalTime > simParameters.timeStep)
+	if(simParameters.totalTime < simParameters.timeStep)
 		exitWithError("Bad simulation parameters: time step must be less than or equal to total simulation time. Exiting");
 }
 
