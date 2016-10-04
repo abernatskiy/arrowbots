@@ -4,6 +4,14 @@
 #include <iostream>
 #include <boost/numeric/ublas/matrix.hpp>
 
+#ifndef DM
+#define DM if(DEBUG)
+#endif // DM
+
+#ifndef DEBUG
+#define DEBUG false
+#endif // DEBUG
+
 #include "evclib/ann/direct.h"
 
 /* Class for evaluating Arrowbot controllers. Submit the controller with wire(),

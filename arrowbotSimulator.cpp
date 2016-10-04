@@ -119,6 +119,9 @@ void ArrowbotSimulator::parseController(matrix<double>& W, matrix<double>& Y)
 			W(i,j) = (*ptrWts)[i][j];
 			Y(i,j) = (*ptrWts)[motors+i][j];
 		}
+
+	DM std::cout << "Parsing the controller:\n";
+	DM std::cout << "W = " << W << " Y = " << Y << std::endl;
 }
 
 double ArrowbotSimulator::evaluateControllerForOrientations(int orientationsIdx)
@@ -176,6 +179,8 @@ void ArrowbotSimulator::wire(ANNDirect* newController)
 	lowerTriangularOnes(K, segments());
 	K = prod(botParameters.sensorAttachment, K);
 	phiCoefficient = Y - prod(psiCoefficient, K);
+
+	DM std::cout << "Results of wiring:\npsiCoefficient: " << psiCoefficient << "\nphiCoefficient: " << phiCoefficient << std::endl;
 }
 
 void ArrowbotSimulator::evaluateController()
