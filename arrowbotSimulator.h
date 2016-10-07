@@ -35,6 +35,8 @@ typedef struct ArrowbotSimulationParameters
 	double timeStep;
 	vector<vector<double>> targetOrientations;
 	vector<vector<double>> initialConditions;
+	bool integrateError;
+	bool writeTrajectories;
 } ArrowbotSimulationParameters;
 
 std::ostream& operator<<(std::ostream&, const ArrowbotSimulationParameters&);

@@ -45,6 +45,8 @@ int main(int argc, char** argv)
 	abtSimParams.targetOrientations(0)(1) = -1.0;
 	abtSimParams.initialConditions(0)(0) = 0.8;
 	abtSimParams.initialConditions(0)(1) = -0.8;
+	abtSimParams.integrateError = false;
+	abtSimParams.writeTrajectories = true;
 
 	DM std::cout << "Simulation parameters:" << std::endl << abtSimParams << std::endl;
 

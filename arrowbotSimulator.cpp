@@ -2,6 +2,8 @@
 #include <iostream>
 #include <sstream>
 #include <cstdlib>
+#include <fstream>
+#include <cmath>
 
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/numeric/odeint.hpp>
@@ -149,12 +151,83 @@ double ArrowbotSimulator::evaluateControllerForOrientations(int orientationsIdx)
 
 	class ArrowbotObserver
 	{
+		double& error;
+		double currentTotalSquareError;
+		double accumulatedTotalSquareError;
+		const bool accumulate;
+		matrix<double> K;
+		stateType targetAbsAngles;
+		double prevTime;
+		bool firstCall; // needed because you just can't use NaNs with -ffast-math
+		std::string trajectoryFileName;
+
+		double totalSquareError(const stateType& curRelAngles)
+		{
+			stateType errors = targetAbsAngles - prod(K, curRelAngles);
+			double accum = 0.;
+			for(unsigned i=0; i<errors.size(); i++)
+				accum += errors(i)*errors(i);
+			return accum;
+		};
+
+		double timeSinceLastCall(double t)
+		{
+			double dt = t - prevTime;
+			prevTime = t;
+			if(firstCall)
+			{
+				firstCall = false;
+				return 0.;
+			}
+			else
+				return dt;
+		};
+
 		public:
+
+		ArrowbotObserver(const stateType& psi, double& err, bool accum=false, std::string trajFileName="") :
+			error(err),
+			currentTotalSquareError(0.),
+			accumulatedTotalSquareError(0.),
+			accumulate(accum),
+			targetAbsAngles(psi),
+			prevTime(0.),
+			firstCall(true),
+			trajectoryFileName(trajFileName)
+		{
+			lowerTriangularOnes(K, targetAbsAngles.size());
+			if(!trajectoryFileName.empty())
+			{
+				std::ofstream ofs;
+				ofs.open(trajectoryFileName, std::ofstream::out | std::ofstream::trunc);
+				ofs.close();
+			}
+		};
 
 		void operator()(const stateType& x, double t)
 		{
-			std::cout << "t: " << t << " state: " << x << std::endl;
-		}
+			DM std::cout << "t: " << t << " state: " << x << std::endl;
+
+			if(!trajectoryFileName.empty())
+			{
+				std::ofstream ofs;
+				ofs.open(trajectoryFileName, std::ofstream::out | std::ofstream::app);
+				ofs << std::setprecision(std::numeric_limits<double>::digits10 + 2) << t;
+				for(unsigned i=0; i<x.size(); i++)
+					ofs << " " << x(i);
+				ofs << "\n";
+				ofs.close();
+			}
+
+			currentTotalSquareError = totalSquareError(x);
+			if(accumulate)
+			{
+				accumulatedTotalSquareError += currentTotalSquareError*timeSinceLastCall(t);
+				error = accumulatedTotalSquareError;
+			}
+			else
+				error = currentTotalSquareError;
+		};
 	};
 
 	using namespace boost::numeric::odeint;
@@ -162,10 +235,16 @@ double ArrowbotSimulator::evaluateControllerForOrientations(int orientationsIdx)
 	stateType currentState = simParameters.initialConditions(orientationsIdx);
 	runge_kutta4<stateType> stepper;
 	ArrowbotRHS abtRHS(phiCoefficient, psiCoefficient, simParameters.targetOrientations(orientationsIdx));
-	ArrowbotObserver obs;
+
+	std::string filename = "";
+	if(simParameters.writeTrajectories)
+		filename = std::string("id") + std::to_string(currentController->id) + "env" + std::to_string(orientationsIdx) + ".trajectory";
+	double error;
+
+	ArrowbotObserver obs(simParameters.targetOrientations(orientationsIdx), error, simParameters.integrateError, filename);
 	integrate_const(stepper, abtRHS, currentState, 0.0, simParameters.totalTime, simParameters.timeStep, obs);
 
-	return 0.;
+	return -1.*error;
 }
 
 // Public
@@ -197,4 +276,6 @@ void ArrowbotSimulator::evaluateController()
 		evalSum += evaluateControllerForOrientations(i);
 
 	currentController->eval = evalSum/((double) numEnv);
+
+	DM std::cout << "Current eval " << currentController->eval << " for controller " << currentController->id << std::endl;
 }
