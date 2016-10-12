@@ -37,16 +37,19 @@ std::ostream& operator<<(std::ostream& os, const vector<vector<double>>& vv)
 
 std::ostream& operator<<(std::ostream& os, const ArrowbotParameters& p)
 {
-	os << "segments: " << p.segments << std::endl << "sensor attachment matrix: " << p.sensorAttachment;
+	os << "segments: " << p.segments
+	   << "\nsensor attachment matrix: " << p.sensorAttachment;
 	return os;
 }
 
 std::ostream& operator<<(std::ostream& os, const ArrowbotSimulationParameters& sp)
 {
-	os << "total time: " << sp.totalTime << std::endl
-	   << "time step: " << sp.timeStep << std::endl
-	   << "Target orientations:" << std::endl << sp.targetOrientations
-	   << "Initial conditions:" << std::endl << sp.initialConditions;
+	os << "total time: " << sp.totalTime
+	   << "\ntime step: " << sp.timeStep
+	   << "\nintegrate error: " << sp.integrateError
+	   << "\nwrite trajectories: " << sp.writeTrajectories
+	   << "\nTarget orientations:\n" << sp.targetOrientations
+	   << "\nInitial conditions:\n" << sp.initialConditions;
 	return os;
 }
 

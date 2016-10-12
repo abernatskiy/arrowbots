@@ -1,3 +1,6 @@
 [submodule "evclib"]
 	path = evclib
 	url = https://github.com/abernatskiy/evclib.git
+[submodule "inih"]
+	path = inih
+	url = https://github.com/benhoyt/inih.git
