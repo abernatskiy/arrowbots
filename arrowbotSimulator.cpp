@@ -133,22 +133,46 @@ double ArrowbotSimulator::evaluateControllerForOrientations(int orientationsIdx)
 {
 	typedef vector<double> stateType;
 
-	class ArrowbotRHS
+	// Variables regulating the behavior of the RHS for large values of x
+	static unsigned rhsOverflow;
+	static unsigned rhsOverflowCounter;
+	static const double rhsOverflowValue = 100.;
+	static const unsigned rhsOverflowCheckPeriod = 40; // keep in mind that runge_kutta4 calls the method four times each step, and double has a pretty good range
+
+	class ArrowbotRHS // WARNING: reset rhsOverflow to false before giving this to an integrator
 	{
 		const matrix<double>& m_phiCoefficient;
 		stateType psiContrib;
 
+		void checkForOverflow(const stateType& x)
+		{
+			rhsOverflowCounter++;
+			if(rhsOverflowCounter == rhsOverflowCheckPeriod)
+			{
+				rhsOverflowCounter = 0;
+				for(unsigned i=0; i<x.size(); i++)
+					if(x(i) >= rhsOverflowValue || x(i) <= -1*rhsOverflowValue)
+						rhsOverflow = true;
+			}
+		};
+
 		public:
 
 		ArrowbotRHS(const matrix<double>& phiCoeff, const matrix<double>& psiCoeff, const vector<double>& targetOrientations) :
-			m_phiCoefficient(phiCoeff)
-		{
-			psiContrib = prod(psiCoeff, targetOrientations);
-		};
+			m_phiCoefficient(phiCoeff),
+			psiContrib(prod(psiCoeff, targetOrientations)) {};
+
 		void operator()(const stateType& x, stateType& dxdt, const double /* t */)
 		{
-			dxdt = psiContrib;
-			axpy_prod(m_phiCoefficient, x, dxdt, false);
+			checkForOverflow(x);
+			if(rhsOverflow)
+				for(unsigned i=0; i<x.size(); i++)
+					dxdt(i) = 0.; // Full stop!
+			else
+			{
+				dxdt = psiContrib;
+				axpy_prod(m_phiCoefficient, x, dxdt, false); // Proceed normally
+			}
 		};
 	};
 
@@ -237,6 +261,8 @@ double ArrowbotSimulator::evaluateControllerForOrientations(int orientationsIdx)
 
 	stateType currentState = simParameters.initialConditions(orientationsIdx);
 	runge_kutta4<stateType> stepper;
+
+	rhsOverflow = false;
 	ArrowbotRHS abtRHS(phiCoefficient, psiCoefficient, simParameters.targetOrientations(orientationsIdx));
 
 	std::string filename = "";
