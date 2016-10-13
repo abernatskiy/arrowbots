@@ -20,4 +20,4 @@ arrowbotEvaluator : $(OBJECTS)
 	$(CC) -o $@ -c $< $(CFLAGS)
 
 clean:
-	rm -f *.o *~ arrowbotEvaluator
+	rm -f ${OBJECTS} arrowbotEvaluator
