@@ -67,7 +67,7 @@ int main(int argc, char** argv)
 	std::tie(inFN, outFN) = parsecli::twoFilenamesForIO(argc, argv, "arrowBotEvaluator");
 
 	// Reading the main configuration file
-	std::string configFileName("config.ini");
+	std::string configFileName("arrowbot.ini");
 	INIReader configReader(configFileName);
 	if(configReader.ParseError() < 0)
 	{
