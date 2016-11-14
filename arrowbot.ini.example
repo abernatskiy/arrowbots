@@ -1,4 +1,4 @@
-; Example config.ini - contains all supported parameters and their default values
+; Example arrowbot.ini - contains all supported parameters and their default values
 
 [arrowbot parameters]
 segments = 2
