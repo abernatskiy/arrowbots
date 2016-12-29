@@ -82,20 +82,8 @@ int main(int argc, char** argv)
 	ArrowbotParameters abtParams;
 	const std::string abtParamsSectionName("arrowbot parameters");
 	abtParams.segments = configReader.GetInteger(abtParamsSectionName, "segments", 2);
-	const std::string sensorAttachmentType = configReader.Get(abtParamsSectionName, "sensorAttachmentType", "identity");
-	if(sensorAttachmentType.compare("identity") == 0)
-		abtParams.sensorAttachment = identity_matrix<double>(abtParams.segments);
-	else if(sensorAttachmentType.compare("null") == 0)
-		abtParams.sensorAttachment = zero_matrix<double>(abtParams.segments);
-	else
-	{
-		std::cout << "Only two types of sensor attachment are available right now:\n"
-		          << " * identity - each sensor is attached to its own segment\n"
-		          << " * null - all sensors are attached to the fixed segment\n"
-		          << "Neither of these matched the type in the configuration file " << configFileName << ", exiting\n";
-		exit(EXIT_FAILURE);
-	}
-	DM std::cout << "Robot parameters:" << std::endl << abtParams << std::endl;
+	abtParams.sensorAttachmentType = configReader.Get(abtParamsSectionName, "sensorAttachmentType", "identity");
+	std::cout << "Robot parameters:" << std::endl << abtParams << std::endl;
 
 	// Loading the simulation parameters
 	ArrowbotSimulationParameters abtSimParams;
@@ -107,7 +95,7 @@ int main(int argc, char** argv)
 	loadVectorsFromFile("targetOrientations.dat", abtSimParams.targetOrientations, abtParams.segments);
 	loadVectorsFromFile("initialConditions.dat", abtSimParams.initialConditions, abtParams.segments);
 
-	DM std::cout << "Simulation parameters:" << std::endl << abtSimParams << std::endl;
+	std::cout << "Simulation parameters:" << std::endl << abtSimParams << std::endl;
 
 	ArrowbotSimulator abts(abtParams, abtSimParams);
 

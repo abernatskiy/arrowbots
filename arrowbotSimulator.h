@@ -2,6 +2,7 @@
 #define ARROWBOT_SIMULATOR_H
 
 #include <iostream>
+#include <string>
 #include <boost/numeric/ublas/matrix.hpp>
 
 #ifndef DM
@@ -24,7 +25,7 @@ using namespace boost::numeric::ublas;
 typedef struct ArrowbotParameters
 {
 	int segments;
-	matrix<double> sensorAttachment;
+	std::string sensorAttachmentType;
 } ArrowbotParameters;
 
 std::ostream& operator<<(std::ostream&, const ArrowbotParameters&);
@@ -47,12 +48,14 @@ class ArrowbotSimulator
 
 	const ArrowbotParameters& botParameters;
 	const ArrowbotSimulationParameters& simParameters;
+	matrix<double> sensorAttachment;
 	ANNDirect* currentController;
 	matrix<double> phiCoefficient, psiCoefficient;
 
 	void validateArrowbotParameters();
 	void validateArrowbotSimulationParameters();
 	void validateController();
+	void validateMorphology();
 	void parseController(matrix<double>& W, matrix<double>& Y);
 	double evaluateControllerForOrientations(int orientationsIdx);
 

@@ -3,8 +3,10 @@
 #include <sstream>
 #include <cstdlib>
 #include <fstream>
+#include <algorithm>
+#include <vector>
+#include <string>
 #include <cmath>
-
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/numeric/odeint.hpp>
 
@@ -38,7 +40,7 @@ std::ostream& operator<<(std::ostream& os, const vector<vector<double>>& vv)
 std::ostream& operator<<(std::ostream& os, const ArrowbotParameters& p)
 {
 	os << "segments: " << p.segments
-	   << "\nsensor attachment matrix: " << p.sensorAttachment;
+	   << "\nsensor attachment type: " << p.sensorAttachmentType;
 	return os;
 }
 
@@ -61,29 +63,17 @@ void ArrowbotSimulator::validateArrowbotParameters()
 {
 	if(segments() < 1)
 		exitWithError("Bad parameters: Arrowbot must have at least one segment. Exiting");
-	if(botParameters.sensorAttachment.size1() != segments() ||
-	   botParameters.sensorAttachment.size2() != segments())
+
+	const std::vector<std::string> acceptableSensorAttachmentTypes = {"identity", "null", "variable"};
+	if(std::find(acceptableSensorAttachmentTypes.begin(), acceptableSensorAttachmentTypes.end(), botParameters.sensorAttachmentType) == acceptableSensorAttachmentTypes.end())
 	{
-		exitWithError("Bad parameters: some size of the sensor attachment table does not match the number of segments. Exiting");
+		std::cout << "Three types of sensor attachment are available:\n"
+		          << " * identity - each sensor is attached to its own segment\n"
+		          << " * null - all sensors are attached to the fixed segment\n"
+		          << " * variable - sensor attachment matrix will be parsed from the genotype/individual string\n"
+		          << "Neither of these matched the type in the configuration file, exiting\n";
+		exit(EXIT_FAILURE);
 	}
-	unsigned maxSensorsPerSegment = 0;
-	unsigned sensorsPerSegment = 0;
-	for(unsigned i=0; i<segments(); i++)
-	{
-		for(unsigned j=0; j<segments(); j++)
-		{
-			if(botParameters.sensorAttachment(i,j) != 0.)
-			{
-				if(botParameters.sensorAttachment(i,j) != 1.)
-					exitWithError("Bad parameters: attachment matrix must only contain zeros and ones. Exiting");
-				sensorsPerSegment++;
-			}
-		}
-		maxSensorsPerSegment = maxSensorsPerSegment>sensorsPerSegment ? maxSensorsPerSegment : sensorsPerSegment;
-		sensorsPerSegment = 0;
-	}
-	if(maxSensorsPerSegment > 1)
-		exitWithError("Bad parameters: having more than one sensor per segment is not supported. Exiting");
 }
 
 void ArrowbotSimulator::validateArrowbotSimulationParameters()
@@ -109,6 +99,28 @@ void ArrowbotSimulator::validateController()
 		os << "ANN size (" << sensors << ", " << motors << ") does not match robot size (" << 2*segments() << ", " << segments() << ", exiting";
 		exitWithError(os.str());
 	}
+}
+
+void ArrowbotSimulator::validateMorphology()
+{
+	unsigned maxSensorsPerSegment = 0;
+	unsigned sensorsPerSegment = 0;
+	for(unsigned i=0; i<segments(); i++)
+	{
+		for(unsigned j=0; j<segments(); j++)
+		{
+			if(sensorAttachment(i,j) != 0.)
+			{
+				if(sensorAttachment(i,j) != 1.)
+					exitWithError("Bad parameters: attachment matrix must only contain zeros and ones. Exiting");
+				sensorsPerSegment++;
+			}
+		}
+		maxSensorsPerSegment = maxSensorsPerSegment>sensorsPerSegment ? maxSensorsPerSegment : sensorsPerSegment;
+		sensorsPerSegment = 0;
+	}
+	if(maxSensorsPerSegment > 1)
+		exitWithError("Bad parameters: having more than one sensor per segment is not supported. Exiting");
 }
 
 void ArrowbotSimulator::parseController(matrix<double>& W, matrix<double>& Y)
@@ -280,12 +292,24 @@ double ArrowbotSimulator::evaluateControllerForOrientations(int orientationsIdx)
 
 void ArrowbotSimulator::wire(ANNDirect* newController)
 {
+	// setting up the sensor attachments
+	if(botParameters.sensorAttachmentType.compare("identity") == 0)
+		sensorAttachment = identity_matrix<double>(segments());
+	else if(botParameters.sensorAttachmentType.compare("null") == 0)
+		sensorAttachment = zero_matrix<double>(segments());
+	else if(botParameters.sensorAttachmentType.compare("variable") == 0)
+	{
+		// TODO
+		validateMorphology();
+	}
+
+	// setting up the controller
 	currentController = newController;
 	validateController();
 	matrix<double> Y, K;
 	parseController(psiCoefficient, Y);
 	lowerTriangularOnes(K, segments());
-	K = prod(botParameters.sensorAttachment, K);
+	K = prod(sensorAttachment, K);
 	phiCoefficient = Y - prod(psiCoefficient, K);
 
 	DM std::cout << "Results of wiring:\npsiCoefficient: " << psiCoefficient << "\nphiCoefficient: " << phiCoefficient << std::endl;
