@@ -76,7 +76,6 @@ int main(int argc, char** argv)
 	}
 
 	// Creating the simulator for the robot
-	using namespace boost::numeric::ublas;
 
 	// Loading the robot parameters
 	ArrowbotParameters abtParams;
@@ -101,8 +100,8 @@ int main(int argc, char** argv)
 
 	// Describing the Arrowbot's controller: two sensors and one motor per segment, identity as transfer function for a purely linear controller
 	ANNDirectHyperparameters hyp;
-	hyp.inputNodes = 2*abtParams.segments;
-	hyp.outputNodes = abtParams.segments;
+	hyp.inputNodes = 2*abts.segments();
+	hyp.outputNodes = abts.segments();
 	hyp.transferFunction = [](double x){return x;}; // purely linear controller
 
 	// Creating the evaluation queue and drawing the rest of the owl
