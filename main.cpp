@@ -10,6 +10,10 @@
 
 #include "evclib/parseCLI.h"
 #include "evclib/evalQueue.h"
+
+#include "evclib/situatedController.h"
+#include "evclib/numericVector.h"
+
 #define ANNNodeState double // explicitly reminding ANNDirect which type we want (double is currently the default)
 #include "evclib/ann/direct.h"
 
@@ -98,20 +102,42 @@ int main(int argc, char** argv)
 
 	ArrowbotSimulator abts(abtParams, abtSimParams);
 
-	// Describing the Arrowbot's controller: two sensors and one motor per segment, identity as transfer function for a purely linear controller
-	ANNDirectHyperparameters hyp;
-	hyp.inputNodes = 2*abts.segments();
-	hyp.outputNodes = abts.segments();
-	hyp.transferFunction = [](double x){return x;}; // purely linear controller
-
-	// Creating the evaluation queue and drawing the rest of the owl
-	auto evalQueue = EvalQueue<ANNDirect,ANNDirectHyperparameters>(inFN, outFN, hyp);
-
-	while(1)
+	if(abtParams.sensorAttachmentType.compare("variable") == 0)
 	{
-		auto ptrANN = evalQueue.getNextPhenotypePtr();
-		abts.wire(ptrANN);
-		abts.evaluateController();
+		typedef SituatedControllerHyperparameters<NumericVectorHyperparameters,NumericVectorHyperparameters> EmbContHyp;
+		typedef SituatedController<NumericVector<unsigned>,NumericVector<int>,EmbContHyp> EmbCont;
+
+		// Describing the compound genotype : for N segments, N integer values between 0 and N-1 are needed to describe the morphology, the rest is the controller
+		EmbContHyp hyp;
+		hyp.environmentFields = abts.segments();
+
+		// Creating the evaluation queue and drawing the rest of the owl:
+		auto evalQueue = EvalQueue<EmbCont,EmbContHyp>(inFN, outFN, hyp);
+
+		while(1)
+		{
+//			auto ptrANN = static_cast<BaseIndividual*>(evalQueue.getNextPhenotypePtr());
+//			abts.wire(ptrANN);
+//			abts.evaluateController();
+		}
+	}
+	else
+	{
+		// Describing the Arrowbot's controller: two sensors and one motor per segment, identity as transfer function for a purely linear controller
+		ANNDirectHyperparameters hyp;
+		hyp.inputNodes = 2*abts.segments();
+		hyp.outputNodes = abts.segments();
+		hyp.transferFunction = [](double x){return x;}; // purely linear controller
+
+		// Creating the evaluation queue and drawing the rest of the owl:
+		auto evalQueue = EvalQueue<ANNDirect,ANNDirectHyperparameters>(inFN, outFN, hyp);
+
+		while(1)
+		{
+			auto ptrANN = evalQueue.getNextPhenotypePtr();
+			abts.wire(ptrANN);
+			abts.evaluateController();
+		}
 	}
 
 	return 0;
