@@ -52,6 +52,7 @@ class ArrowbotSimulator
 	ANNDirect* currentController;
 	matrix<double> phiCoefficient, psiCoefficient;
 
+	void validateSensorPlacementArray(const std::vector<unsigned int>&);
 	void validateArrowbotParameters();
 	void validateArrowbotSimulationParameters();
 	void validateController();
@@ -69,7 +70,7 @@ class ArrowbotSimulator
 		validateArrowbotParameters();
 		validateArrowbotSimulationParameters();
 	};
-	void setSensorAttachmentMatrix(const matrix<double>& newAttachmentMatrix) {sensorAttachment = newSensorAttachment;};
+	void setSensorAttachmentMatrix(const matrix<double>& newAttachmentMatrix) {sensorAttachment = newAttachmentMatrix;};
 	void placeSensors(NumericVector<unsigned>* newSensorPlacement);
 	void wire(ANNDirect* newController);
 	void evaluateController();

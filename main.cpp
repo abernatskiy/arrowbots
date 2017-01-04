@@ -79,15 +79,15 @@ int main(int argc, char** argv)
 		exit(EXIT_FAILURE);
 	}
 
-	// Figuring out how the morphology will be determined
-	std::string sensorAttachmentType = configReader.Get(abtParamsSectionName, "sensorAttachmentType", "identity");
-
 	// Creating the simulator for the robot
 	// Loading the robot parameters
 	ArrowbotParameters abtParams;
 	const std::string abtParamsSectionName("arrowbot parameters");
 	abtParams.segments = configReader.GetInteger(abtParamsSectionName, "segments", 2);
 	std::cout << "Robot parameters:" << std::endl << abtParams << std::endl;
+
+	// Figuring out how the morphology will be determined - GLOBAL
+	std::string sensorAttachmentType = configReader.Get(abtParamsSectionName, "sensorAttachmentType", "identity");
 
 	// Loading the simulation parameters
 	ArrowbotSimulationParameters abtSimParams;
@@ -121,7 +121,7 @@ int main(int argc, char** argv)
 		while(1)
 		{
 			auto ptrEmbContr = evalQueue.getNextPhenotypePtr();
-			abts.placeSensors(&(ptrEmbContr->env)); // sensors are placed separately for each individual
+			abts.placeSensors(&(ptrEmbContr->env)); // Sensors are placed separately for each individual
 			abts.wire(&(ptrEmbContr->contr));
 			abts.evaluateController();
 		}
@@ -130,9 +130,9 @@ int main(int argc, char** argv)
 	{
 		// Placing the sensors once for all simulations
 		if(sensorAttachmentType.compare("identity") == 0)
-			abts.setSensorAttachmentMatrix(identity_matrix<double>(abts.segments());
+			abts.setSensorAttachmentMatrix(identity_matrix<double>(abts.segments()));
 		else if(sensorAttachmentType.compare("null") == 0)
-			abts.setSensorAttachmentMatrix(zero_matrix<double>(abts.segments());
+			abts.setSensorAttachmentMatrix(zero_matrix<double>(abts.segments()));
 		else
 		{
 			std::cout << "Three types of sensor attachment are available:\n"

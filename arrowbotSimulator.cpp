@@ -114,7 +114,7 @@ void ArrowbotSimulator::validateMorphology()
 
 void ArrowbotSimulator::validateSensorPlacementArray(const std::vector<unsigned>& spa)
 {
-	if(spa.size() != segments()):
+	if(spa.size() != segments())
 		exitWithError("Sensor placement array too short, exiting.");
 	for(auto it=spa.begin(); it!=spa.end(); it++)
 		if(*it > segments())
