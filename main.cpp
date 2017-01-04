@@ -124,6 +124,9 @@ int main(int argc, char** argv)
 			abts.placeSensors(&(ptrEmbContr->env)); // Sensors are placed separately for each individual
 			abts.wire(&(ptrEmbContr->contr));
 			abts.evaluateController();
+
+			// Since only the controller part gets evaluated by default, we need to copy the evaluation to the field of the composite object EmbCont
+			ptrEmbContr->setEvaluation((ptrEmbContr->contr).getEvaluation());
 		}
 	}
 	else

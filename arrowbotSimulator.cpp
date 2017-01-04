@@ -291,14 +291,17 @@ double ArrowbotSimulator::evaluateControllerForOrientations(int orientationsIdx)
 void ArrowbotSimulator::placeSensors(NumericVector<unsigned>* newSensorPlacement)
 {
 	validateSensorPlacementArray(newSensorPlacement->vals);
+
 	sensorAttachment = zero_matrix<double>(segments());
 	for(unsigned i=0; i<segments(); i++)
 	{
 		unsigned curSensPos = (newSensorPlacement->vals)[i];
 		if(curSensPos > 0)
-			sensorAttachment(i, curSensPos) = 1;
+			sensorAttachment(i, curSensPos-1) = 1;
 	}
-	validateMorphology(); // TODO: the morphology is guaranteed to be valid after this operation, so remove this after the debug
+//	validateMorphology();
+
+	DM std::cout << "Placed the sensors, attachment matrix is now J = " << sensorAttachment << "\n";
 }
 
 void ArrowbotSimulator::wire(ANNDirect* newController)
