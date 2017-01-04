@@ -7,6 +7,7 @@
 #include <vector>
 #include <string>
 #include <cmath>
+#include <cstdlib>
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/numeric/odeint.hpp>
 
@@ -39,8 +40,7 @@ std::ostream& operator<<(std::ostream& os, const vector<vector<double>>& vv)
 
 std::ostream& operator<<(std::ostream& os, const ArrowbotParameters& p)
 {
-	os << "segments: " << p.segments
-	   << "\nsensor attachment type: " << p.sensorAttachmentType;
+	os << "segments: " << p.segments << "\n";
 	return os;
 }
 
@@ -63,17 +63,6 @@ void ArrowbotSimulator::validateArrowbotParameters()
 {
 	if(segments() < 1)
 		exitWithError("Bad parameters: Arrowbot must have at least one segment. Exiting");
-
-	const std::vector<std::string> acceptableSensorAttachmentTypes = {"identity", "null", "variable"};
-	if(std::find(acceptableSensorAttachmentTypes.begin(), acceptableSensorAttachmentTypes.end(), botParameters.sensorAttachmentType) == acceptableSensorAttachmentTypes.end())
-	{
-		std::cout << "Three types of sensor attachment are available:\n"
-		          << " * identity - each sensor is attached to its own segment\n"
-		          << " * null - all sensors are attached to the fixed segment\n"
-		          << " * variable - sensor attachment matrix will be parsed from the genotype/individual string\n"
-		          << "Neither of these matched the type in the configuration file, exiting\n";
-		exit(EXIT_FAILURE);
-	}
 }
 
 void ArrowbotSimulator::validateArrowbotSimulationParameters()
@@ -121,6 +110,15 @@ void ArrowbotSimulator::validateMorphology()
 	}
 	if(maxSensorsPerSegment > 1)
 		exitWithError("Bad parameters: having more than one sensor per segment is not supported. Exiting");
+}
+
+void ArrowbotSimulator::validateSensorPlacementArray(const std::vector<unsigned>& spa)
+{
+	if(spa.size() != segments()):
+		exitWithError("Sensor placement array too short, exiting.");
+	for(auto it=spa.begin(); it!=spa.end(); it++)
+		if(*it > segments())
+			exitWithError("One of the elements of the sensor placement array is too large, exiting.");
 }
 
 void ArrowbotSimulator::parseController(matrix<double>& W, matrix<double>& Y)
@@ -279,7 +277,7 @@ double ArrowbotSimulator::evaluateControllerForOrientations(int orientationsIdx)
 
 	std::string filename = "";
 	if(simParameters.writeTrajectories)
-		filename = std::string("id") + std::to_string(currentController->id) + "env" + std::to_string(orientationsIdx) + ".trajectory";
+		filename = std::string("id") + std::to_string(currentController->getID()) + "env" + std::to_string(orientationsIdx) + ".trajectory";
 	double error;
 
 	ArrowbotObserver obs(simParameters.targetOrientations(orientationsIdx), error, simParameters.integrateError, filename);
@@ -290,19 +288,21 @@ double ArrowbotSimulator::evaluateControllerForOrientations(int orientationsIdx)
 
 // Public
 
+void ArrowbotSimulator::placeSensors(NumericVector<unsigned>* newSensorPlacement)
+{
+	validateSensorPlacementArray(newSensorPlacement->vals);
+	sensorAttachment = zero_matrix<double>(segments());
+	for(unsigned i=0; i<segments(); i++)
+	{
+		unsigned curSensPos = (newSensorPlacement->vals)[i];
+		if(curSensPos > 0)
+			sensorAttachment(i, curSensPos) = 1;
+	}
+	validateMorphology(); // TODO: the morphology is guaranteed to be valid after this operation, so remove this after the debug
+}
+
 void ArrowbotSimulator::wire(ANNDirect* newController)
 {
-	// setting up the sensor attachments
-	if(botParameters.sensorAttachmentType.compare("identity") == 0)
-		sensorAttachment = identity_matrix<double>(segments());
-	else if(botParameters.sensorAttachmentType.compare("null") == 0)
-		sensorAttachment = zero_matrix<double>(segments());
-	else if(botParameters.sensorAttachmentType.compare("variable") == 0)
-	{
-		// TODO
-		validateMorphology();
-	}
-
 	// setting up the controller
 	currentController = newController;
 	validateController();
@@ -328,7 +328,7 @@ void ArrowbotSimulator::evaluateController()
 	for(unsigned i=0; i<numEnv; i++)
 		evalSum += evaluateControllerForOrientations(i);
 
-	currentController->eval = evalSum/((double) numEnv);
+	currentController->setEvaluation(evalSum/((double) numEnv));
 
-	DM std::cout << "Current eval " << currentController->eval << " for controller " << currentController->id << std::endl;
+	DM std::cout << "Current eval " << currentController->getEvaluation() << " for controller " << currentController->getID() << std::endl;
 }

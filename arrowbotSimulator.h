@@ -14,6 +14,7 @@
 #endif // DEBUG
 
 #include "evclib/ann/direct.h"
+#include "evclib/numericVector.h"
 
 /* Class for evaluating Arrowbot controllers. Submit the controller with wire(),
    then run the simulation and evaluation computation with evaluateController().
@@ -25,7 +26,6 @@ using namespace boost::numeric::ublas;
 typedef struct ArrowbotParameters
 {
 	int segments;
-	std::string sensorAttachmentType;
 } ArrowbotParameters;
 
 std::ostream& operator<<(std::ostream&, const ArrowbotParameters&);
@@ -69,6 +69,8 @@ class ArrowbotSimulator
 		validateArrowbotParameters();
 		validateArrowbotSimulationParameters();
 	};
+	void setSensorAttachmentMatrix(const matrix<double>& newAttachmentMatrix) {sensorAttachment = newSensorAttachment;};
+	void placeSensors(NumericVector<unsigned>* newSensorPlacement);
 	void wire(ANNDirect* newController);
 	void evaluateController();
 	inline unsigned segments(){return botParameters.segments;};

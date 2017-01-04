@@ -79,13 +79,14 @@ int main(int argc, char** argv)
 		exit(EXIT_FAILURE);
 	}
 
-	// Creating the simulator for the robot
+	// Figuring out how the morphology will be determined
+	std::string sensorAttachmentType = configReader.Get(abtParamsSectionName, "sensorAttachmentType", "identity");
 
+	// Creating the simulator for the robot
 	// Loading the robot parameters
 	ArrowbotParameters abtParams;
 	const std::string abtParamsSectionName("arrowbot parameters");
 	abtParams.segments = configReader.GetInteger(abtParamsSectionName, "segments", 2);
-	abtParams.sensorAttachmentType = configReader.Get(abtParamsSectionName, "sensorAttachmentType", "identity");
 	std::cout << "Robot parameters:" << std::endl << abtParams << std::endl;
 
 	// Loading the simulation parameters
@@ -102,34 +103,53 @@ int main(int argc, char** argv)
 
 	ArrowbotSimulator abts(abtParams, abtSimParams);
 
-	if(abtParams.sensorAttachmentType.compare("variable") == 0)
+	if(sensorAttachmentType.compare("variable") == 0)
 	{
-		typedef SituatedControllerHyperparameters<NumericVectorHyperparameters,NumericVectorHyperparameters> EmbContHyp;
-		typedef SituatedController<NumericVector<unsigned>,NumericVector<int>,EmbContHyp> EmbCont;
+		typedef SituatedControllerHyperparameters<NumericVectorHyperparameters,ANNDirectHyperparameters> EmbContHyp;
+		typedef SituatedController<NumericVector<unsigned>,ANNDirect,EmbContHyp> EmbCont;
 
-		// Describing the compound genotype : for N segments, N integer values between 0 and N-1 are needed to describe the morphology, the rest is the controller
+		// Describing the compound genotype : for N segments, N integer values between 0 and N are needed to describe the morphology, the rest is the controller
 		EmbContHyp hyp;
 		hyp.environmentFields = abts.segments();
+		hyp.controllerHyperparameters.inputNodes = 2*abts.segments();
+		hyp.controllerHyperparameters.outputNodes = abts.segments();
+		hyp.controllerHyperparameters.transferFunction = [](double x){return x;}; // Purely linear controller. Note that the controller is never used to actually transform sensor inputs to motor outputs, i.e. this setting does not influence anything
 
 		// Creating the evaluation queue and drawing the rest of the owl:
 		auto evalQueue = EvalQueue<EmbCont,EmbContHyp>(inFN, outFN, hyp);
 
 		while(1)
 		{
-//			auto ptrANN = static_cast<BaseIndividual*>(evalQueue.getNextPhenotypePtr());
-//			abts.wire(ptrANN);
-//			abts.evaluateController();
+			auto ptrEmbContr = evalQueue.getNextPhenotypePtr();
+			abts.placeSensors(&(ptrEmbContr->env)); // sensors are placed separately for each individual
+			abts.wire(&(ptrEmbContr->contr));
+			abts.evaluateController();
 		}
 	}
 	else
 	{
+		// Placing the sensors once for all simulations
+		if(sensorAttachmentType.compare("identity") == 0)
+			abts.setSensorAttachmentMatrix(identity_matrix<double>(abts.segments());
+		else if(sensorAttachmentType.compare("null") == 0)
+			abts.setSensorAttachmentMatrix(zero_matrix<double>(abts.segments());
+		else
+		{
+			std::cout << "Three types of sensor attachment are available:\n"
+			        << " * identity - each sensor is attached to its own segment\n"
+			        << " * null - all sensors are attached to the fixed segment\n"
+			        << " * variable - sensor attachment matrix will be parsed from the genotype/individual string\n"
+			        << "Neither of these matched the type in the configuration file (" << sensorAttachmentType << "), exiting\n";
+			exit(EXIT_FAILURE);
+		}
+
 		// Describing the Arrowbot's controller: two sensors and one motor per segment, identity as transfer function for a purely linear controller
 		ANNDirectHyperparameters hyp;
 		hyp.inputNodes = 2*abts.segments();
 		hyp.outputNodes = abts.segments();
 		hyp.transferFunction = [](double x){return x;}; // purely linear controller
 
-		// Creating the evaluation queue and drawing the rest of the owl:
+		// Creating the evaluation queue and doing the simulations
 		auto evalQueue = EvalQueue<ANNDirect,ANNDirectHyperparameters>(inFN, outFN, hyp);
 
 		while(1)
