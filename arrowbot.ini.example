@@ -2,7 +2,7 @@
 
 [arrowbot parameters]
 segments = 2
-sensorAttachmentType = identity ; Can be "identity" (sensors attached to their corresponding segments) or "null" (all sensors attached to the fixed segment)
+sensorAttachmentType = identity ; Can be "identity" (sensors attached to their corresponding segments), "null" (all sensors attached to the fixed segment) or "variable" (attachment data is supplied to the program through input)
 
 [simulation parameters]
 simulationTime = 1.0
