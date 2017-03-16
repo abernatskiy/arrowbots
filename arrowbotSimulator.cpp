@@ -189,8 +189,8 @@ double ArrowbotSimulator::evaluateControllerForOrientations(int orientationsIdx)
 	class ArrowbotObserver
 	{
 		double& error;
-		double currentTotalSquareError;
-		double accumulatedTotalSquareError;
+		double currentAverageSquareError;
+		double accumulatedAverageSquareError;
 		const bool accumulate;
 		matrix<double> K;
 		stateType targetAbsAngles;
@@ -198,13 +198,13 @@ double ArrowbotSimulator::evaluateControllerForOrientations(int orientationsIdx)
 		bool firstCall; // needed because you just can't use NaNs with -ffast-math
 		std::string trajectoryFileName;
 
-		double totalSquareError(const stateType& curRelAngles)
+		double averageSquareError(const stateType& curRelAngles)
 		{
 			stateType errors = targetAbsAngles - prod(K, curRelAngles);
 			double accum = 0.;
 			for(unsigned i=0; i<errors.size(); i++)
 				accum += errors(i)*errors(i);
-			return accum;
+			return accum/double(errors.size());
 		};
 
 		double timeSinceLastCall(double t)
@@ -224,8 +224,8 @@ double ArrowbotSimulator::evaluateControllerForOrientations(int orientationsIdx)
 
 		ArrowbotObserver(const stateType& psi, double& err, bool accum=false, std::string trajFileName="") :
 			error(err),
-			currentTotalSquareError(0.),
-			accumulatedTotalSquareError(0.),
+			currentAverageSquareError(0.),
+			accumulatedAverageSquareError(0.),
 			accumulate(accum),
 			targetAbsAngles(psi),
 			prevTime(0.),
@@ -256,14 +256,14 @@ double ArrowbotSimulator::evaluateControllerForOrientations(int orientationsIdx)
 				ofs.close();
 			}
 
-			currentTotalSquareError = totalSquareError(x);
+			currentAverageSquareError = averageSquareError(x);
 			if(accumulate)
 			{
-				accumulatedTotalSquareError += currentTotalSquareError*timeSinceLastCall(t);
-				error = accumulatedTotalSquareError;
+				accumulatedAverageSquareError += currentAverageSquareError*timeSinceLastCall(t);
+				error = accumulatedAverageSquareError;
 			}
 			else
-				error = currentTotalSquareError;
+				error = currentAverageSquareError;
 		};
 	};
 
