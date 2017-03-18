@@ -198,13 +198,18 @@ double ArrowbotSimulator::evaluateControllerForOrientations(int orientationsIdx)
 		bool firstCall; // needed because you just can't use NaNs with -ffast-math
 		std::string trajectoryFileName;
 
-		double averageSquareError(const stateType& curRelAngles)
+		double totalSquareError(const stateType& curRelAngles)
 		{
 			stateType errors = targetAbsAngles - prod(K, curRelAngles);
 			double accum = 0.;
 			for(unsigned i=0; i<errors.size(); i++)
 				accum += errors(i)*errors(i);
-			return accum/double(errors.size());
+			return accum;
+		};
+
+		double averageSquareError(const stateType& curRelAngles)
+		{
+			return totalSquareError(curRelAngles)/double(curRelAngles.size());
 		};
 
 		double timeSinceLastCall(double t)
@@ -256,7 +261,8 @@ double ArrowbotSimulator::evaluateControllerForOrientations(int orientationsIdx)
 				ofs.close();
 			}
 
-			currentAverageSquareError = averageSquareError(x);
+//			currentAverageSquareError = averageSquareError(x);
+			currentAverageSquareError = totalSquareError(x);
 			if(accumulate)
 			{
 				accumulatedAverageSquareError += currentAverageSquareError*timeSinceLastCall(t);
