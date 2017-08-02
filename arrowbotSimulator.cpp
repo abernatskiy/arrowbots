@@ -335,7 +335,14 @@ void ArrowbotSimulator::evaluateController()
 	unsigned numEnv = simParameters.targetOrientations.size();
 	double evalSum = 0.0;
 	for(unsigned i=0; i<numEnv; i++)
+	{
 		evalSum += evaluateControllerForOrientations(i);
+		if(evalSum < -10.)
+		{
+			evalSum = -10.*((double) numEnv);
+			break;
+		}
+	}
 
 	currentController->setEvaluation(evalSum/((double) numEnv));
 
