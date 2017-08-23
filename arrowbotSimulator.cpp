@@ -289,7 +289,7 @@ double ArrowbotSimulator::evaluateControllerForOrientations(int orientationsIdx)
 	ArrowbotObserver obs(simParameters.targetOrientations(orientationsIdx), error, simParameters.integrateError, filename);
 	integrate_const(stepper, abtRHS, currentState, 0.0, simParameters.totalTime, simParameters.timeStep, obs);
 
-	return -1.*error;
+	return -1.*log10(error);
 }
 
 // Public
